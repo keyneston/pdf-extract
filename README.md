@@ -4,4 +4,5 @@ Extracts images from PDFs and does its best to combine the masks.
 
 ## Requires
 
-* pdfimages
+* `pdfimages`
+* `convert` from imagemagick

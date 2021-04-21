@@ -9,30 +9,37 @@ import (
 )
 
 type Entry struct {
-	Page   int
-	Num    int
-	Type   string
-	Width  int
-	Height int
-	Color  string
-	Comp   int
-	BPC    int
-	ENC    string
-	Interp bool
-	Object int
-	ID     int
-	XPPI   int
-	YPPI   int
-	Size   string
-	Ratio  float32
+	LineNum int
+	Page    int
+	Num     int
+	Type    string
+	Width   int
+	Height  int
+	Color   string
+	Comp    int
+	BPC     int
+	ENC     string
+	Interp  bool
+	Object  int
+	ID      int
+	XPPI    int
+	YPPI    int
+	Size    string
+	Ratio   float32
 }
 
-func NewEntry(mapping map[string]int, input []string) (*Entry, error) {
-	entry := &Entry{}
+func NewEntry(lineNumber int, mapping map[string]int, input []string) (*Entry, error) {
+	if len(mapping) == 0 {
+		return nil, fmt.Errorf("Invalid mapping")
+	}
 
-	var err error
+	entry := &Entry{
+		LineNum: lineNumber,
+	}
+
 	for name, index := range mapping {
 		cur := input[index]
+		var err error
 
 		switch name {
 		case "page":
@@ -69,16 +76,15 @@ func NewEntry(mapping map[string]int, input []string) (*Entry, error) {
 			entry.Ratio, err = parsePercent(cur)
 		}
 		if err != nil {
-			return nil, errors.Wrap(err, "parsing failed")
+			return nil, errors.Wrapf(err, "failed parsing {field %q} {content %q}", name, cur)
 		}
-
 	}
 
-	return &Entry{}, nil
+	return entry, nil
 }
 
 func parsePercent(input string) (float32, error) {
-	output, err := strconv.ParseFloat(strings.Trim("%", input), 32)
+	output, err := strconv.ParseFloat(strings.Trim(input, `%`), 32)
 	return float32(output / 100), err
 }
 
@@ -90,6 +96,13 @@ func parseBool(input string) (bool, error) {
 		return true, nil
 	default:
 		return false, fmt.Errorf("unable to parse bool %q", input)
-
 	}
+}
+
+func (e *Entry) matchKey() string {
+	return fmt.Sprintf("%d-%d-%dx%d-%dx%d", e.Object, e.Page, e.Width, e.Height, e.XPPI, e.YPPI)
+}
+
+func (e *Entry) String() string {
+	return fmt.Sprintf("Entry{Object: %d; Page: %d}", e.Object, e.Page)
 }
