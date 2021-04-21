@@ -1,7 +1,9 @@
 package pdfimages
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -40,19 +42,31 @@ func NewEntry(mapping map[string]int, input []string) (*Entry, error) {
 		case "type":
 			entry.Type = cur
 		case "width":
+			entry.Width, err = strconv.Atoi(cur)
 		case "height":
+			entry.Height, err = strconv.Atoi(cur)
 		case "color":
 			entry.Color = cur
 		case "comp":
+			entry.Comp, err = strconv.Atoi(cur)
 		case "bpc":
+			entry.BPC, err = strconv.Atoi(cur)
 		case "enc":
+			entry.ENC = cur
 		case "interp":
+			entry.Interp, err = parseBool(cur)
 		case "object":
+			entry.Object, err = strconv.Atoi(cur)
 		case "ID":
+			entry.ID, err = strconv.Atoi(cur)
 		case "x-ppi":
+			entry.XPPI, err = strconv.Atoi(cur)
 		case "y-ppi":
+			entry.YPPI, err = strconv.Atoi(cur)
 		case "size":
+			entry.Size = cur
 		case "ratio":
+			entry.Ratio, err = parsePercent(cur)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "parsing failed")
@@ -61,4 +75,21 @@ func NewEntry(mapping map[string]int, input []string) (*Entry, error) {
 	}
 
 	return &Entry{}, nil
+}
+
+func parsePercent(input string) (float32, error) {
+	output, err := strconv.ParseFloat(strings.Trim("%", input), 32)
+	return float32(output / 100), err
+}
+
+func parseBool(input string) (bool, error) {
+	switch input {
+	case "no":
+		return false, nil
+	case "yes":
+		return true, nil
+	default:
+		return false, fmt.Errorf("unable to parse bool %q", input)
+
+	}
 }
