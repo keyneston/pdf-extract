@@ -1,6 +1,7 @@
 package pdfimages
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"io"
@@ -20,6 +21,7 @@ var (
 
 type List struct {
 	Entries []*Entry
+	Pages   int
 }
 
 func GetList(fileName string) (*List, error) {
@@ -33,17 +35,25 @@ func GetList(fileName string) (*List, error) {
 	log.Printf("Got %d bytes", buf.Len())
 
 	list := &List{}
+	if err := list.parse(buf); err != nil {
+		return nil, err
+	}
 
-	lineNumber := 0
+	return list, nil
+}
 
+func (l *List) parse(r io.Reader) error {
+	red := bufio.NewReader(r)
+
+	count := 0
 	var mappings map[string]int
 	for {
-		line, err := buf.ReadBytes('\n')
+		line, err := red.ReadBytes('\n')
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return nil, err
+			return err
 		}
 		if line == nil {
 			break
@@ -59,16 +69,21 @@ func GetList(fileName string) (*List, error) {
 			continue
 		}
 
-		entry, err := NewEntry(lineNumber, mappings, splitRe.Split(string(line), -1))
+		entry, err := NewEntry(count, mappings, splitRe.Split(string(line), -1))
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		list.Entries = append(list.Entries, entry)
-		lineNumber += 1
+		l.Entries = append(l.Entries, entry)
+
+		if entry.Page > l.Pages {
+			l.Pages = entry.Page
+		}
+
+		count += 1
 	}
 
-	return list, nil
+	return nil
 }
 
 func (l *List) Matches() [][]*Entry {

@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -13,16 +12,18 @@ import (
 	"time"
 
 	"github.com/keyneston/pdf-extract/pdfimages"
-	"github.com/pkg/errors"
+	"github.com/keyneston/pdf-extract/unit"
 )
 
 func main() {
-	var fileName, dest string
+	var fileName, outputDir string
 	var skipClean bool
+	var count int
 
 	flag.StringVar(&fileName, "f", "", "File to extract images from")
-	flag.StringVar(&dest, "d", "", "Directory to output images to")
+	flag.StringVar(&outputDir, "d", "", "Directory to output images to")
 	flag.BoolVar(&skipClean, "skip-clean", false, "Skip cleaning up work in progress")
+	flag.IntVar(&count, "n", -1, "Number of files to convert; for testing purposes")
 	flag.Parse()
 
 	list, err := pdfimages.GetList(fileName)
@@ -30,60 +31,47 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	matchset := list.Matches()
-
-	tmpDir, err := pdfimages.Extract(fileName)
-	if err != nil {
+	if err := pdfimages.Extract(list.Pages, fileName, outputDir); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-	log.Printf("Extracted to %s", tmpDir)
+
+	log.Printf("Extracted to %s", outputDir)
 	if !skipClean {
-		defer os.RemoveAll(tmpDir)
+		defer func() {
+			if err := filepath.Walk(outputDir, cleanup); err != nil {
+				log.Printf("Error cleaning: %v", err)
+			}
+		}()
 	}
 
-	fileMap, err := getDirectoryMap(tmpDir)
+	units, err := unit.NewUnits(outputDir, list.Matches())
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatal(err)
 	}
 
-	for i, set := range matchset {
+	for i, u := range units {
 		names := []string{}
-
-		for j, entry := range set {
-			fileName := fileMap[fmt.Sprintf("file-%03d", entry.LineNum)]
-			if fileName == "" {
-				log.Printf("Missing file for %s", entry)
-				continue
-			}
-			ext := filepath.Ext(fileName)
-			newName := filepath.Join(tmpDir, fmt.Sprintf("set-%04d-%d%s", i, j, ext))
-
-			if err := os.Rename(filepath.Join(tmpDir, fileName), newName); err != nil {
-				log.Fatalf("Error: %v", err)
-			}
-
-			names = append(names, newName)
-		}
 
 		if len(names) == 0 {
 			continue
 		}
 
-		// combinedName := filepath.Join(dest, fmt.Sprintf("comb-%03d.jpg", set[0].Object))
-		// if len(names) == 1 {
-		// 	log.Printf("Moving: %q", names[0])
-		// 	if err := os.Rename(names[0], combinedName); err != nil {
-		// 		log.Fatalf("Error: %v", err)
-		// 	}
-		// } else {
-		// 	if err := combine(combinedName, names); err != nil {
-		// 		log.Fatalf("Error: %v", err)
-		// 	}
-		// }
+		if count > 0 && i >= count {
+			continue
+		}
 
-		// if i == 10 {
-		// 	log.Fatalf("Only doing 10")
-		// }
+		combinedName := filepath.Join(outputDir, u.CombinedName())
+		if len(names) == 1 {
+			log.Printf("Moving: %q", names[0])
+			if err := os.Rename(names[0], combinedName); err != nil {
+				log.Fatalf("Error: %v", err)
+			}
+		} else {
+			if err := combine(combinedName, names); err != nil {
+				log.Fatalf("Error: %v", err)
+			}
+		}
+
 	}
 }
 
@@ -105,17 +93,14 @@ func combine(output string, inputs []string) error {
 	return err
 }
 
-func getDirectoryMap(dir string) (map[string]string, error) {
-	fsInfos, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, errors.Wrap(err, "getting directory map")
+func cleanup(path string, info fs.FileInfo, err error) error {
+	if !info.Mode().IsRegular() || strings.Contains("-comb", info.Name()) {
+		return nil
 	}
 
-	mappings := map[string]string{}
-	for _, fs := range fsInfos {
-		name := fs.Name()
-		mappings[strings.TrimRight(name, filepath.Ext(name))] = name
+	if !strings.Contains("-set-", info.Name()) {
+		return nil
 	}
 
-	return mappings, nil
+	return os.Remove(filepath.Join(path, info.Name()))
 }

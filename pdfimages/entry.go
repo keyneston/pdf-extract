@@ -9,33 +9,30 @@ import (
 )
 
 type Entry struct {
-	LineNum int
-	Page    int
-	Num     int
-	Type    string
-	Width   int
-	Height  int
-	Color   string
-	Comp    int
-	BPC     int
-	ENC     string
-	Interp  bool
-	Object  int
-	ID      int
-	XPPI    int
-	YPPI    int
-	Size    string
-	Ratio   float32
+	Page   int
+	Num    int
+	Type   string
+	Width  int
+	Height int
+	Color  string
+	Comp   int
+	BPC    int
+	ENC    string
+	Interp bool
+	Object int
+	ID     int
+	XPPI   int
+	YPPI   int
+	Size   string
+	Ratio  float32
 }
 
-func NewEntry(lineNumber int, mapping map[string]int, input []string) (*Entry, error) {
+func NewEntry(previousPages int, mapping map[string]int, input []string) (*Entry, error) {
 	if len(mapping) == 0 {
 		return nil, fmt.Errorf("Invalid mapping")
 	}
 
-	entry := &Entry{
-		LineNum: lineNumber,
-	}
+	entry := &Entry{}
 
 	for name, index := range mapping {
 		cur := input[index]
@@ -100,9 +97,10 @@ func parseBool(input string) (bool, error) {
 }
 
 func (e *Entry) matchKey() string {
-	return fmt.Sprintf("%d-%d-%dx%d-%dx%d", e.Object, e.Page, e.Width, e.Height, e.XPPI, e.YPPI)
+	//return fmt.Sprintf("%d-%d-%dx%d-%dx%d", e.Object, e.Page, e.Width, e.Height, e.XPPI, e.YPPI)
+	return fmt.Sprintf("%d-%d", e.Page, e.Object)
 }
 
 func (e *Entry) String() string {
-	return fmt.Sprintf("Entry{Object: %d; Page: %d}", e.Object, e.Page)
+	return fmt.Sprintf("Entry{Num: %d; Object: %d; Page: %d; Size: %dx%d}", e.Num, e.Object, e.Page, e.Width, e.Height)
 }
