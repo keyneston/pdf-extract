@@ -2,7 +2,9 @@
 
 Extracts images from PDFs and does its best to combine the masks.
 
-## Requires
+# MacOS
 
-* `pdfimages`
-* `convert` from imagemagick
+```
+brew install poppler cairo golang
+go install
+```

@@ -1,6 +1,10 @@
+github.com/cheggaaa/go-poppler v0.0.0-20200821122123-9a69d0a5d017 h1:Uya4WQ2c9h8fEXLTCQlfpYIyfe4xrmt5xd1ceHO/iuw=
+github.com/cheggaaa/go-poppler v0.0.0-20200821122123-9a69d0a5d017/go.mod h1:bfBt8FcKHw3k+4xkpVpd/ca7ORd7fxVgKlnAIfFrbaA=
 github.com/go-test/deep v1.0.7 h1:/VSMRlnY/JSyqxQUzQLKVMAskpY/NZKFA5j2P+0pP2M=
 github.com/go-test/deep v1.0.7/go.mod h1:QV8Hv/iy04NyLBxAdO9njL0iVPN1S4d/A3NVv1V36o8=
 github.com/keyneston/tabslib v0.0.0-20200904124715-739c15d81515 h1:t767yiFuLO3rPQsqYoV7O5Z7GZX+UsL7ZZ7FjRu4GPE=
 github.com/keyneston/tabslib v0.0.0-20200904124715-739c15d81515/go.mod h1:sg38/3hDkdRoGJfU6pKVmuviD97EIvmauVI1jHMHUbo=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/ungerik/go-cairo v0.0.0-20210317133935-984b32e6bac6 h1:KrKqo3an56mwfObaZtHlyhN+IVDyw1XaoIT5Cr2Ttvk=
+github.com/ungerik/go-cairo v0.0.0-20210317133935-984b32e6bac6/go.mod h1:yLTJg56omDJ+JVxZ5whpCrZgQdaSs+OBdFa+X6ViJcI=

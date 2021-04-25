@@ -11,8 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keyneston/pdf-extract/pdfimages"
-	"github.com/keyneston/pdf-extract/unit"
+	"github.com/keyneston/pdf-extract/pdfextract"
 )
 
 func main() {
@@ -26,53 +25,57 @@ func main() {
 	flag.IntVar(&count, "n", -1, "Number of files to convert; for testing purposes")
 	flag.Parse()
 
-	list, err := pdfimages.GetList(fileName)
-	if err != nil {
+	if err := pdfextract.DoThing(fileName); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 
-	if err := pdfimages.Extract(list.Pages, fileName, outputDir); err != nil {
-		log.Fatalf("Error: %v", err)
-	}
+	// list, err := pdfimages.GetList(fileName)
+	// if err != nil {
+	// 	log.Fatalf("Error: %v", err)
+	// }
 
-	log.Printf("Extracted to %s", outputDir)
-	if !skipClean {
-		defer func() {
-			if err := filepath.Walk(outputDir, cleanup); err != nil {
-				log.Printf("Error cleaning: %v", err)
-			}
-		}()
-	}
+	// if err := pdfimages.Extract(list.Pages, fileName, outputDir); err != nil {
+	// 	log.Fatalf("Error: %v", err)
+	// }
 
-	units, err := unit.NewUnits(outputDir, list.Matches())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// log.Printf("Extracted to %s", outputDir)
+	// if !skipClean {
+	// 	defer func() {
+	// 		if err := filepath.Walk(outputDir, cleanup); err != nil {
+	// 			log.Printf("Error cleaning: %v", err)
+	// 		}
+	// 	}()
+	// }
 
-	for i, u := range units {
-		names := []string{}
+	// units, err := unit.NewUnits(outputDir, list.Matches())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-		if len(names) == 0 {
-			continue
-		}
+	// for i, u := range units {
+	// 	names := []string{}
 
-		if count > 0 && i >= count {
-			continue
-		}
+	// 	if len(names) == 0 {
+	// 		continue
+	// 	}
 
-		combinedName := filepath.Join(outputDir, u.CombinedName())
-		if len(names) == 1 {
-			log.Printf("Moving: %q", names[0])
-			if err := os.Rename(names[0], combinedName); err != nil {
-				log.Fatalf("Error: %v", err)
-			}
-		} else {
-			if err := combine(combinedName, names); err != nil {
-				log.Fatalf("Error: %v", err)
-			}
-		}
+	// 	if count > 0 && i >= count {
+	// 		continue
+	// 	}
 
-	}
+	// 	combinedName := filepath.Join(outputDir, u.CombinedName())
+	// 	if len(names) == 1 {
+	// 		log.Printf("Moving: %q", names[0])
+	// 		if err := os.Rename(names[0], combinedName); err != nil {
+	// 			log.Fatalf("Error: %v", err)
+	// 		}
+	// 	} else {
+	// 		if err := combine(combinedName, names); err != nil {
+	// 			log.Fatalf("Error: %v", err)
+	// 		}
+	// 	}
+
+	// }
 }
 
 func combine(output string, inputs []string) error {
