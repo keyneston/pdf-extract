@@ -1,11 +1,11 @@
 package pdfextract
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
-	"os"
 
 	"github.com/cheggaaa/go-poppler"
 	"github.com/slongfield/pyfmt"
@@ -73,7 +73,7 @@ func (p *PDFImage) setContent() {
 }
 
 func (p *PDFImage) matchKey() string {
-	return fmt.Sprintf("%d-%dx%d", p.Page, p.Width, p.Height)
+	return fmt.Sprintf("%d-%dx%d-%02.02fx%02.02f", p.Page, p.Width, p.Height, p.X1, p.Y1)
 }
 
 func (p *PDFImage) String() string {
@@ -103,13 +103,18 @@ func (p *PDFImage) Save(loc string) error {
 		return err
 	}
 
-	f, err := os.OpenFile(loc, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	// f, err := os.OpenFile(loc, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	// if err != nil {
+	// 	return err
+	// }
+	// defer f.Close()
 
-	return p.Write(f)
+	// return p.Write(f)
+	status := p.Surface.WriteToPNG(loc)
+	if status != cairo.STATUS_SUCCESS {
+		return errors.New(status.String())
+	}
+	return nil
 }
 
 func (p *PDFImage) Write(w io.Writer) error {

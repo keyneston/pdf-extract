@@ -5,11 +5,16 @@ import (
 	"log"
 
 	"github.com/cheggaaa/go-poppler"
-	"github.com/keyneston/tabslib"
 )
 
-func DoThing(name string) error {
-	doc, err := poppler.Open(name)
+type PDFExtractOptions struct {
+	Input       string
+	Destination string
+	Format      string
+}
+
+func PDFExtract(options *PDFExtractOptions) error {
+	doc, err := poppler.Open(options.Input)
 	if err != nil {
 		return err
 	}
@@ -25,10 +30,16 @@ func DoThing(name string) error {
 		}
 		images = append(images, newImages...)
 
-		break
 	}
 
-	log.Printf("Matches: %v", tabslib.PrettyString(FindSets(images)))
+	for i, set := range FindSets(images) {
+		for _, img := range set {
+			err := img.Save(fmt.Sprintf(`/tmp/tokens/page_{Page:02d}_set_%03d_id_{ID:03d}.png`, i))
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }
