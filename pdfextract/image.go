@@ -1,11 +1,12 @@
 package pdfextract
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
+	"image/png"
 	"io"
+	"os"
 
 	"github.com/cheggaaa/go-poppler"
 	"github.com/slongfield/pyfmt"
@@ -76,31 +77,27 @@ func (p *PDFImage) String() string {
 	return fmt.Sprintf("PDFImage{P%d-%d, %2.02f,%2.02f - %2.02f,%2.02f}", p.Page, p.ID, p.X1, p.Y1, p.X2, p.Y2)
 }
 
-// TODO: make this so it supports something other than .png, but that requires
-// adjusting the cairo library or figuring out the bug where Surface.GetImage()
-// loses the alpha.
 func (p *PDFImage) Save(loc string) error {
 	loc, err := p.evaluateTemplate(loc)
 	if err != nil {
 		return err
 	}
 
-	// f, err := os.OpenFile(loc, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer f.Close()
-
-	// return p.Write(f)
-	status := p.Surface.WriteToPNG(loc)
-	if status != cairo.STATUS_SUCCESS {
-		return errors.New(status.String())
+	f, err := os.OpenFile(loc, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	if err != nil {
+		return err
 	}
-	return nil
+	defer f.Close()
+
+	return p.WritePNG(f)
 }
 
-func (p *PDFImage) Write(w io.Writer) error {
+func (p *PDFImage) WriteJPEG(w io.Writer) error {
 	return jpeg.Encode(w, p.GetImage(), &jpeg.Options{Quality: 100})
+}
+
+func (p *PDFImage) WritePNG(w io.Writer) error {
+	return png.Encode(w, p.GetImage())
 }
 
 func (p *PDFImage) evaluateTemplate(input string) (string, error) {

@@ -9,9 +9,9 @@ Extracts images from PDFs in a hopefully better way than `pdfimages`.
 
 # Limitations and Warnings
 
-1. Currently exports everything as a PNG.
+1. Currently exports everything as a PNG, in order to maintain image alpha 
 2. No guarantees this runs on anyone else computer
-3. No guarantees this doesn't leak memory like a beast.
+3. No guarantees this doesn't leak memory like a beast
 
 # Use
 
