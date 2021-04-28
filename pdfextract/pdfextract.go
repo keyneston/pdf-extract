@@ -3,6 +3,7 @@ package pdfextract
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/cheggaaa/go-poppler"
 )
@@ -21,20 +22,15 @@ func PDFExtract(options *PDFExtractOptions) error {
 	defer doc.Close()
 
 	pageCount := doc.GetNPages()
-	images := []*PDFImage{}
 
 	for i := 0; i < pageCount; i++ {
-		newImages, err := checkPage(doc, i)
+		images, err := checkPage(doc, i)
 		if err != nil {
 			return fmt.Errorf("Error checking page %d: %w", i, err)
 		}
-		images = append(images, newImages...)
 
-	}
-
-	for i, set := range FindSets(images) {
-		for _, img := range set {
-			err := img.Save(fmt.Sprintf(`/tmp/tokens/page_{Page:02d}_set_%03d_id_{ID:03d}.png`, i))
+		for _, img := range images {
+			err := img.Save(filepath.Join(options.Destination, options.Format))
 			if err != nil {
 				return err
 			}

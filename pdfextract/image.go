@@ -72,31 +72,13 @@ func (p *PDFImage) setContent() {
 	}
 }
 
-func (p *PDFImage) matchKey() string {
-	return fmt.Sprintf("%d-%dx%d-%02.02fx%02.02f", p.Page, p.Width, p.Height, p.X1, p.Y1)
-}
-
 func (p *PDFImage) String() string {
 	return fmt.Sprintf("PDFImage{P%d-%d, %2.02f,%2.02f - %2.02f,%2.02f}", p.Page, p.ID, p.X1, p.Y1, p.X2, p.Y2)
 }
 
-func FindSets(inputs []*PDFImage) [][]*PDFImage {
-	matches := map[string][]*PDFImage{}
-
-	for _, in := range inputs {
-		key := in.matchKey()
-		matches[key] = append(matches[key], in)
-	}
-
-	res := [][]*PDFImage{}
-
-	for _, v := range matches {
-		res = append(res, v)
-	}
-
-	return res
-}
-
+// TODO: make this so it supports something other than .png, but that requires
+// adjusting the cairo library or figuring out the bug where Surface.GetImage()
+// loses the alpha.
 func (p *PDFImage) Save(loc string) error {
 	loc, err := p.evaluateTemplate(loc)
 	if err != nil {
