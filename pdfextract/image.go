@@ -8,12 +8,20 @@ import (
 	"os"
 
 	"github.com/cheggaaa/go-poppler"
+	"github.com/slongfield/pyfmt"
+	"github.com/ungerik/go-cairo"
 )
 
 type PDFImage struct {
-	Page  int
-	ID    int
-	Image image.Image `json:"-"`
+	Page int
+	ID   int
+
+	Content   string
+	Width     int
+	Height    int
+	Extension string
+
+	Surface *cairo.Surface `json:"-"`
 
 	X1 float64
 	X2 float64
@@ -22,27 +30,50 @@ type PDFImage struct {
 }
 
 func NewImage(page int, img poppler.Image) *PDFImage {
-	return &PDFImage{
-		Page:  page,
-		ID:    img.Id,
-		Image: img.GetSurface().GetImage(),
-		X1:    img.Area.X1,
-		Y1:    img.Area.Y1,
-		X2:    img.Area.X2,
-		Y2:    img.Area.Y2,
+	p := &PDFImage{
+		Page:    page,
+		ID:      img.Id,
+		Surface: img.GetSurface(),
+		X1:      img.Area.X1,
+		Y1:      img.Area.Y1,
+		X2:      img.Area.X2,
+		Y2:      img.Area.Y2,
+	}
+
+	p.setHeight()
+	p.setWidth()
+	p.setContent()
+
+	return p
+}
+
+func (p *PDFImage) GetImage() image.Image {
+	return p.Surface.GetImage()
+}
+
+func (p *PDFImage) setHeight() {
+	p.Height = p.Surface.GetHeight()
+}
+
+func (p *PDFImage) setWidth() {
+	p.Width = p.Surface.GetWidth()
+}
+
+func (p *PDFImage) setContent() {
+	switch p.Surface.GetContent() {
+	case cairo.CONTENT_COLOR:
+		p.Content = "color"
+	case cairo.CONTENT_ALPHA:
+		p.Content = "alpha"
+	case cairo.CONTENT_COLOR_ALPHA:
+		p.Content = "color_alpha"
+	default:
+		p.Content = ""
 	}
 }
 
-func (p *PDFImage) Height() float64 {
-	return p.Y2 - p.Y1
-}
-
-func (p *PDFImage) Width() float64 {
-	return p.X2 - p.X1
-}
-
 func (p *PDFImage) matchKey() string {
-	return fmt.Sprintf("%d-%2.02f-%2.02f-%2.02f-%2.02f", p.Page, p.X1, p.X2, p.Y1, p.Y2)
+	return fmt.Sprintf("%d-%dx%d", p.Page, p.Width, p.Height)
 }
 
 func (p *PDFImage) String() string {
@@ -67,6 +98,11 @@ func FindSets(inputs []*PDFImage) [][]*PDFImage {
 }
 
 func (p *PDFImage) Save(loc string) error {
+	loc, err := p.evaluateTemplate(loc)
+	if err != nil {
+		return err
+	}
+
 	f, err := os.OpenFile(loc, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
 		return err
@@ -77,5 +113,9 @@ func (p *PDFImage) Save(loc string) error {
 }
 
 func (p *PDFImage) Write(w io.Writer) error {
-	return jpeg.Encode(w, p.Image, &jpeg.Options{Quality: 100})
+	return jpeg.Encode(w, p.GetImage(), &jpeg.Options{Quality: 100})
+}
+
+func (p *PDFImage) evaluateTemplate(input string) (string, error) {
+	return pyfmt.Fmt(input, p)
 }

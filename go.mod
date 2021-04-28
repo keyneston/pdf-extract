@@ -7,6 +7,7 @@ require (
 	github.com/go-test/deep v1.0.7 // indirect
 	github.com/keyneston/tabslib v0.0.0-20200904124715-739c15d81515 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/slongfield/pyfmt v0.0.0-20180124071345-020a7cb18bca // indirect
 	github.com/ungerik/go-cairo v0.0.0-20210317133935-984b32e6bac6 // indirect
 )
 

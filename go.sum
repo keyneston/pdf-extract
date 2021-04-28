@@ -6,5 +6,7 @@ github.com/keyneston/tabslib v0.0.0-20200904124715-739c15d81515 h1:t767yiFuLO3rP
 github.com/keyneston/tabslib v0.0.0-20200904124715-739c15d81515/go.mod h1:sg38/3hDkdRoGJfU6pKVmuviD97EIvmauVI1jHMHUbo=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/slongfield/pyfmt v0.0.0-20180124071345-020a7cb18bca h1:fO9hIZRL+kteo13eh51GqkUdZf/NpMmZsi8ob6b1eOg=
+github.com/slongfield/pyfmt v0.0.0-20180124071345-020a7cb18bca/go.mod h1:41QiOYlRDMkcA4GnlnV0jfYUyqxKHYnUeaQRAvpezw8=
 github.com/ungerik/go-cairo v0.0.0-20210317133935-984b32e6bac6 h1:KrKqo3an56mwfObaZtHlyhN+IVDyw1XaoIT5Cr2Ttvk=
 github.com/ungerik/go-cairo v0.0.0-20210317133935-984b32e6bac6/go.mod h1:yLTJg56omDJ+JVxZ5whpCrZgQdaSs+OBdFa+X6ViJcI=
