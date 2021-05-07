@@ -1,6 +1,7 @@
 package pdfextract
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -92,6 +93,10 @@ func (p *PDFImage) Save(loc string) error {
 	return p.WritePNG(f)
 }
 
+func (p *PDFImage) FormatString(template string) (string, error) {
+	return p.evaluateTemplate(template)
+}
+
 func (p *PDFImage) WriteJPEG(w io.Writer) error {
 	return jpeg.Encode(w, p.GetImage(), &jpeg.Options{Quality: 100})
 }
@@ -102,4 +107,14 @@ func (p *PDFImage) WritePNG(w io.Writer) error {
 
 func (p *PDFImage) evaluateTemplate(input string) (string, error) {
 	return pyfmt.Fmt(input, p)
+}
+
+func (p *PDFImage) Hash() (string, error) {
+	h := sha256.New()
+
+	if err := p.WritePNG(h); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

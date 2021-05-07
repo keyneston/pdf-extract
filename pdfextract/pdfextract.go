@@ -1,9 +1,12 @@
 package pdfextract
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cheggaaa/go-poppler"
 )
@@ -12,9 +15,13 @@ type PDFExtractOptions struct {
 	Input       string
 	Destination string
 	Format      string
+
+	WriteText bool
 }
 
 func PDFExtract(options *PDFExtractOptions) error {
+	fileHashes := map[string]struct{}{}
+
 	doc, err := poppler.Open(options.Input)
 	if err != nil {
 		return err
@@ -22,25 +29,52 @@ func PDFExtract(options *PDFExtractOptions) error {
 	defer doc.Close()
 
 	pageCount := doc.GetNPages()
+	content := map[int][]string{}
 
 	for i := 0; i < pageCount; i++ {
-		images, err := checkPage(doc, i)
+		text, images, err := checkPage(doc, i)
 		if err != nil {
 			return fmt.Errorf("Error checking page %d: %w", i, err)
 		}
 
+		content[i] = text
 		for _, img := range images {
-			err := img.Save(filepath.Join(options.Destination, options.Format))
+			filename, err := img.FormatString(filepath.Join(options.Destination, options.Format))
 			if err != nil {
 				return err
 			}
+
+			hash, err := img.Hash()
+			if err != nil {
+				return err
+			}
+			if _, ok := fileHashes[hash]; ok {
+				continue
+			}
+			fileHashes[hash] = struct{}{}
+
+			if err := img.Save(filename); err != nil {
+				return err
+			}
+		}
+	}
+
+	if options.WriteText {
+		f, err := os.OpenFile(filepath.Join(options.Destination, "text.json"), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+		if err != nil {
+			return err
+		}
+		enc := json.NewEncoder(f)
+		enc.SetIndent("", "    ")
+		if err := enc.Encode(content); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func checkPage(doc *poppler.Document, pageID int) ([]*PDFImage, error) {
+func checkPage(doc *poppler.Document, pageID int) ([]string, []*PDFImage, error) {
 	log.Printf("Checking page %d", pageID)
 
 	page := doc.GetPage(pageID)
@@ -52,5 +86,6 @@ func checkPage(doc *poppler.Document, pageID int) ([]*PDFImage, error) {
 		res = append(res, NewImage(pageID, img))
 	}
 
-	return res, nil
+	content := strings.Split(page.Text(), "\n")
+	return content, res, nil
 }
