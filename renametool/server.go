@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -61,7 +63,42 @@ func (s *Server) indexGET(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func httpError(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(w, "Error: %v", err)
+}
+
+func getParsedBody(r *http.Request) (url.Values, error) {
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	parsed, err := url.ParseQuery(string(body))
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
+}
+
 func (s *Server) renamePOST(w http.ResponseWriter, r *http.Request) {
+	parsed, err := getParsedBody(r)
+	if err != nil {
+		httpError(w, err)
+		return
+	}
+
+	oldName := mux.Vars(r)["image"]
+	newName := parsed.Get("new_name")
+	newName = fmt.Sprintf("%s%s", newName, filepath.Ext(oldName))
+
+	// TODO: verify file is in the root directory
+	// TODO: actually rename the files
+
+	log.Printf("Renaming %q to %q", oldName, newName)
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
