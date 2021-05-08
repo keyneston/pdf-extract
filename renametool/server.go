@@ -32,7 +32,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		"page":  page,
 		"id":    id,
 		"path":  f,
-		"text":  cleanText(s.text[page]),
+		"text":  filterUnique(cleanText(s.text[page])),
 	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error: %v", err)
@@ -79,6 +79,21 @@ func cleanText(in []string) []string {
 		}
 
 		out = append(out, scrubbed)
+	}
+
+	return out
+}
+
+func filterUnique(in []string) []string {
+	tmp := map[string]bool{}
+
+	for _, i := range in {
+		tmp[i] = true
+	}
+
+	out := make([]string, 0, len(tmp))
+	for k := range tmp {
+		out = append(out, k)
 	}
 
 	return out

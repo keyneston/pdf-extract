@@ -86,6 +86,9 @@ func checkPage(doc *poppler.Document, pageID int) ([]string, []*PDFImage, error)
 		res = append(res, NewImage(pageID, img))
 	}
 
+	// TODO: spliting this by line doesn't necessarily work, sometimes grouped
+	// lines are together. Instead we should group by area and then turn that
+	// into a single line string?
 	content := strings.Split(page.Text(), "\n")
 	return content, res, nil
 }
