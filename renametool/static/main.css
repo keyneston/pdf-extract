@@ -1,0 +1,30 @@
+.gallery-image {
+		border: 1px solid #ddd;
+		border-raidus: 4px;
+		padding: 5px;
+		width: 200px;
+		height: 200px;
+}
+
+.gallery-image img {
+		width: auto;
+		height: 200px;
+}
+
+.gallery-instance {
+		padding: 5px;
+}
+
+
+.rename-image {
+		border: 1px solid #ddd;
+		border-raidus: 4px;
+		padding: 5px;
+		width: 400px;
+		height: 400px;
+}
+
+.rename-image img {
+		width: auto;
+		height: 400px;
+}

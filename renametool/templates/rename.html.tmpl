@@ -3,25 +3,28 @@
     <title>Rename Tool: {{.count}}/{{.total}}</title>
 	<script src="/static/jquery-3.6.0.min.js"></script>
 	<script src="/static/jquery-ui/jquery-ui.min.js"></script>
-	<link rel="stylesheet" href="/static/jquery-ui/jquery-ui.min.css"></style>
-	<link rel="stylesheet" href="/static/jquery-ui/jquery-ui.theme.min.css"></style>
+	<link rel="stylesheet" href="/static/jquery-ui/jquery-ui.min.css">
+	<link rel="stylesheet" href="/static/jquery-ui/jquery-ui.theme.min.css">
+	<link rel="stylesheet" href="/static/main.css" type="text/css">
   </head>
   <body>
   <h1>Page {{.page}}</h1>
-  <img src="/images/{{.path}}">
-  <form autocomplete="off" action="/rename">
+  <div class="rename-image">
+    <img src="/images/{{.path}}">
+  </div>
+  <h3>Old Name: {{ .path | sansext }}</h3>
+  <form autocomplete="off" action={{ joinpath "/rename" .path }} method="POST">
     <div class="autocomplete" style="width:300px;">
     <label for="new_name">New Name: </label>
 	<input id="new_name" type="text" name="new_name" placeholder="...">
   </div>
   <input type="submit">
   </form>
-  </body>
-
   <script>
   $( function() {
   var options = {{.text }};
   $("#new_name").autocomplete({source: options});
   });
   </script>
+  </body>
 </html>

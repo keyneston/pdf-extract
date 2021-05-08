@@ -3,11 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -17,28 +20,49 @@ type Server struct {
 	text  map[int][]string
 }
 
-func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
-	var page, id int
-	//q := r.URL.Query()
-
-	f := s.files[50]
-	if _, err := fmt.Sscanf(f, "page_%d_id_%d.png", &page, &id); err != nil {
-		fmt.Fprintf(w, "error: %v", err)
-	}
-
-	if err := tmpls.ExecuteTemplate(w, "rename.html.tmpl", map[string]interface{}{
+func (s *Server) renameGET(w http.ResponseWriter, r *http.Request) {
+	f := mux.Vars(r)["image"]
+	tmplVars := map[string]interface{}{
 		"count": s.count,
 		"total": s.total,
-		"page":  page,
-		"id":    id,
 		"path":  f,
-		"text":  filterUnique(cleanText(s.text[page])),
-	}); err != nil {
+		"text":  []string{},
+	}
+
+	if !contains(f, s.files) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"status": "not found", "code": 404}`)
+		return
+	}
+
+	var page, id int
+	_, err := fmt.Sscanf(f, "page_%d_id_%d.png", &page, &id)
+	if err == nil {
+		tmplVars["page"] = page
+		tmplVars["id"] = id
+		tmplVars["text"] = filterUnique(cleanText(s.text[page]))
+	}
+
+	if err := tmpls.ExecuteTemplate(w, "rename.html.tmpl", tmplVars); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error: %v", err)
 	}
 
 	s.count += 1
+}
+
+func (s *Server) indexGET(w http.ResponseWriter, r *http.Request) {
+	log.Printf("In indexGET")
+	if err := tmpls.ExecuteTemplate(w, "index.html.tmpl", map[string]interface{}{
+		"files": s.files,
+	}); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error: %v", err)
+	}
+}
+
+func (s *Server) renamePOST(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (s *Server) parseDirectory(dir string) error {
@@ -97,4 +121,14 @@ func filterUnique(in []string) []string {
 	}
 
 	return out
+}
+
+func contains(needle string, haystack []string) bool {
+	for _, i := range haystack {
+		if needle == i {
+			return true
+		}
+	}
+
+	return false
 }

@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 5018), see www.w3.org">
+
+  <title>Rename Tool: {{.count}}/{{.total}}</title>
+  <script src="/static/jquery-3.6.0.min.js" type="text/javascript"></script>
+  <script src="/static/jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="/static/jquery-ui/jquery-ui.min.css" type="text/css">
+  <link rel="stylesheet" href="/static/jquery-ui/jquery-ui.theme.min.css" type="text/css">
+  <link rel="stylesheet" href="/static/main.css" type="text/css">
+</head>
+
+<body>
+  <div id="gallery">
+    {{- range $index, $element := .files}}
+    <div class="gallery-instance" id={{ fmt "gallery-instance-%s" $element }}>
+	<div class="gallery-image">
+	  <a href={{ joinpath "/images/" $element }}>
+	    <img src={{ joinpath "/images/" $element}} />
+	  </a>
+	</div>
+    <a class="gallery-link" href={{ joinpath "/rename/" $element}}>{{$element}}</a>
+    </div>
+	{{- end}}
+  </div>
+</body>
+</html>
