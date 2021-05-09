@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	orderedmap "github.com/wk8/go-ordered-map"
 )
 
 type Server struct {
@@ -20,7 +21,7 @@ type Server struct {
 
 	count int
 	total int
-	files []string
+	files *orderedmap.OrderedMap
 	text  map[int][]string
 }
 
@@ -37,6 +38,13 @@ func (s *Server) renameGET(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, `{"status": "not found", "code": 404}`)
 		return
+	}
+
+	if next := s.files.GetPair(f).Next(); next != nil {
+		tmplVars["next"] = next.Key.(string)
+	}
+	if prev := s.files.GetPair(f).Prev(); prev != nil {
+		tmplVars["prev"] = prev.Key.(string)
 	}
 
 	var page, id int
@@ -112,17 +120,32 @@ func (s *Server) renamePOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	pair := s.files.GetPair(oldName)
+
+	redirect := "/"
+	if next := pair.Next(); next != nil {
+		redirect = filepath.Join("/rename", next.Key.(string))
+	}
+
+	s.files.Delete(oldName)
+
+	// Redirect to next file
+	// TODO: add some type of ordering to files
+	http.Redirect(w, r, redirect, http.StatusSeeOther)
 }
 
 func (s *Server) parseDirectory() error {
+	if s.files == nil {
+		s.files = orderedmap.New()
+	}
+
 	entries, err := os.ReadDir(s.root)
 	if err != nil {
 		return err
 	}
 
 	for _, ent := range entries {
-		s.files = append(s.files, ent.Name())
+		s.files.Set(ent.Name(), true)
 
 		if ent.Name() == "text.json" {
 			f, err := os.Open(filepath.Join(s.root, ent.Name()))
@@ -135,7 +158,7 @@ func (s *Server) parseDirectory() error {
 			}
 		}
 	}
-	s.total = len(s.files)
+	s.total = s.files.Len()
 
 	return nil
 }
@@ -173,14 +196,9 @@ func filterUnique(in []string) []string {
 	return out
 }
 
-func contains(needle string, haystack []string) bool {
-	for _, i := range haystack {
-		if needle == i {
-			return true
-		}
-	}
-
-	return false
+func contains(needle string, haystack *orderedmap.OrderedMap) bool {
+	_, ok := haystack.Get(needle)
+	return ok
 }
 
 func cleanFileName(name string) string {

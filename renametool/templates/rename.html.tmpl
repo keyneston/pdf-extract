@@ -20,6 +20,21 @@
   </div>
   <input type="submit">
   </form>
+
+  <div id="navigation-box">
+      <div id="previous">
+		{{- if .prev }}
+		<a href={{ joinpath "/rename" .prev }}>Prev</a>
+		{{- end }}
+	  </div>
+
+      <div id="next">
+		{{- if .next }}
+		<a href={{ joinpath "/rename" .next }}>Next</a>
+		{{- end }}
+	  </div>
+  </div>
+
   <script>
   $( function() {
   var options = {{.text }};

@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	orderedmap "github.com/wk8/go-ordered-map"
 )
 
 //go:embed static templates
@@ -25,21 +26,30 @@ var funcMap = template.FuncMap{
 	"sansext": func(in string) string {
 		return strings.TrimSuffix(in, filepath.Ext(in))
 	},
+	"iter": func(in *orderedmap.OrderedMap) []string {
+		ret := make([]string, 0, in.Len())
+		for p := in.Oldest(); p != nil; p = p.Next() {
+			ret = append(ret, p.Key.(string))
+		}
+		return ret
+	},
 }
 var tmpls = template.Must(template.New("").Funcs(funcMap).ParseFS(content, "templates/*.tmpl"))
 
 func main() {
 	var port int
+	var root string
 
 	flag.IntVar(&port, "port", 8888, "Port to listen to")
+	flag.StringVar(&root, "root", "/tmp/tokens", "Root directory to work from")
 	flag.Parse()
 
-	s := Server{root: "/tmp/tokens"}
+	s := Server{root: root}
 	s.parseDirectory()
 
 	r := mux.NewRouter()
 	r.PathPrefix("/images/").Handler(
-		http.StripPrefix("/images/", http.FileServer(http.Dir("/tmp/tokens")))).Methods("GET")
+		http.StripPrefix("/images/", http.FileServer(http.Dir(root)))).Methods("GET")
 	r.PathPrefix("/static/").Handler(http.FileServer(http.FS(content)))
 	r.HandleFunc("/rename/{image}", s.renameGET).Methods("GET")
 	r.HandleFunc("/rename/{image}", s.renamePOST).Methods("POST")

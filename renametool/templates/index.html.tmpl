@@ -15,7 +15,7 @@
 
 <body>
   <div id="gallery">
-    {{- range $index, $element := .files}}
+    {{- range $index, $element := iter .files }}
     <div class="gallery-instance" id={{ fmt "gallery-instance-%s" $element }}>
 	<div class="gallery-image">
 	  <a href={{ joinpath "/images/" $element }}>
