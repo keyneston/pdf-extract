@@ -16,6 +16,8 @@ import (
 )
 
 type Server struct {
+	root string
+
 	count int
 	total int
 	files []string
@@ -92,18 +94,29 @@ func (s *Server) renamePOST(w http.ResponseWriter, r *http.Request) {
 
 	oldName := mux.Vars(r)["image"]
 	newName := parsed.Get("new_name")
-	newName = fmt.Sprintf("%s%s", newName, filepath.Ext(oldName))
+	newName = fmt.Sprintf("%s%s", cleanFileName(newName), filepath.Ext(oldName))
 
-	// TODO: verify file is in the root directory
-	// TODO: actually rename the files
+	if !contains(oldName, s.files) {
+		httpError(w, fmt.Errorf("Can't find file %q", oldName))
+		return
+	}
+
+	if err := safeFile(s.root, newName); err != nil {
+		httpError(w, err)
+		return
+	}
 
 	log.Printf("Renaming %q to %q", oldName, newName)
+	if err := os.Rename(filepath.Join(s.root, oldName), filepath.Join(s.root, newName)); err != nil {
+		httpError(w, err)
+		return
+	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (s *Server) parseDirectory(dir string) error {
-	entries, err := os.ReadDir(dir)
+func (s *Server) parseDirectory() error {
+	entries, err := os.ReadDir(s.root)
 	if err != nil {
 		return err
 	}
@@ -112,7 +125,7 @@ func (s *Server) parseDirectory(dir string) error {
 		s.files = append(s.files, ent.Name())
 
 		if ent.Name() == "text.json" {
-			f, err := os.Open(filepath.Join(dir, ent.Name()))
+			f, err := os.Open(filepath.Join(s.root, ent.Name()))
 			if err != nil {
 				return err
 			}
@@ -168,4 +181,26 @@ func contains(needle string, haystack []string) bool {
 	}
 
 	return false
+}
+
+func cleanFileName(name string) string {
+	return strings.Trim(cleanTextRE.ReplaceAllString(name, "-"), "-")
+}
+
+func safeFile(root, name string) error {
+	path := filepath.Join(root, name)
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+
+	rel, err := filepath.Rel(root, abs)
+	switch {
+	case err != nil:
+		return err
+	case strings.HasPrefix(rel, "."):
+		return fmt.Errorf("%q does not seem to be a subpath of %q", path, root)
+	}
+
+	return nil
 }

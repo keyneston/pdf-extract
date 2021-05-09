@@ -8,6 +8,7 @@ require (
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/slongfield/pyfmt v0.0.0-20180124071345-020a7cb18bca
+	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/ungerik/go-cairo v0.0.0-20210317133935-984b32e6bac6
 )
 

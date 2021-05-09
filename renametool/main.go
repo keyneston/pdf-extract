@@ -34,8 +34,8 @@ func main() {
 	flag.IntVar(&port, "port", 8888, "Port to listen to")
 	flag.Parse()
 
-	s := Server{}
-	s.parseDirectory("/tmp/tokens")
+	s := Server{root: "/tmp/tokens"}
+	s.parseDirectory()
 
 	r := mux.NewRouter()
 	r.PathPrefix("/images/").Handler(
