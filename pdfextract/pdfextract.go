@@ -6,15 +6,18 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
+	"regexp"
 
 	"github.com/cheggaaa/go-poppler"
+	"golang.org/x/net/html/charset"
 )
 
 type PDFExtractOptions struct {
 	Input       string
 	Destination string
 	Format      string
+	Pages       []int
+	Seperator   *regexp.Regexp
 
 	WriteText bool
 }
@@ -31,8 +34,14 @@ func PDFExtract(options *PDFExtractOptions) error {
 	pageCount := doc.GetNPages()
 	content := map[int][]string{}
 
-	for i := 0; i < pageCount; i++ {
-		text, images, err := checkPage(doc, i)
+	pages := options.Pages
+	if pages == nil {
+		for i := 0; i < pageCount; i++ {
+			pages = append(pages, i)
+		}
+	}
+	for _, i := range pages {
+		text, images, err := options.checkPage(doc, i)
 		if err != nil {
 			return fmt.Errorf("Error checking page %d: %w", i, err)
 		}
@@ -74,7 +83,7 @@ func PDFExtract(options *PDFExtractOptions) error {
 	return nil
 }
 
-func checkPage(doc *poppler.Document, pageID int) ([]string, []*PDFImage, error) {
+func (options PDFExtractOptions) checkPage(doc *poppler.Document, pageID int) ([]string, []*PDFImage, error) {
 	log.Printf("Checking page %d", pageID)
 
 	page := doc.GetPage(pageID)
@@ -86,9 +95,18 @@ func checkPage(doc *poppler.Document, pageID int) ([]string, []*PDFImage, error)
 		res = append(res, NewImage(pageID, img))
 	}
 
-	// TODO: spliting this by line doesn't necessarily work, sometimes grouped
-	// lines are together. Instead we should group by area and then turn that
-	// into a single line string?
-	content := strings.Split(page.Text(), "\n")
-	return content, res, nil
+	if !options.WriteText {
+		return nil, res, nil
+	}
+
+	txt := page.Text()
+	e, _, _ := charset.DetermineEncoding([]byte(txt), "")
+
+	var err error
+	txt, err = e.NewEncoder().String(txt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Error encoding string: %w", err)
+	}
+
+	return options.Seperator.Split(txt, -1), res, nil
 }

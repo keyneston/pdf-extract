@@ -11,6 +11,7 @@ require (
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/ungerik/go-cairo v0.0.0-20210317133935-984b32e6bac6
 	github.com/wk8/go-ordered-map v0.2.0 // indirect
+	golang.org/x/net v0.0.0-20210508051633-16afe75a6701 // indirect
 )
 
 replace github.com/cheggaaa/go-poppler => github.com/keyneston/go-poppler v0.0.0-20210428105915-4ae9be4a77fa
